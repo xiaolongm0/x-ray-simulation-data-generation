@@ -60,14 +60,10 @@ def generate_segments(n, total_length=512, min_gap=5, min_segment_length=21, max
 nPxRad = 1500
 nPxEta = 9424
 
-#nPxRad = 512
-#nPxEta = 512
-
 img = np.zeros((nPxRad,nPxEta)).astype(np.uint16)
 
 # define the number of rings
 nRings = 30
-#nRings = 10
 
 # define the gaussian parameters
 sigmaEtaMax = 4
@@ -87,13 +83,7 @@ segDistance = 10
 maxNPeaksInSegment = 50 # maximum number of peaks in a connected area
 maxSegmentsInRing = 100 # maximum number of connected areas in a ring
 
-# rads = minRad + np.random.random(nRings)*(nPxRad-(minRad+100)) # randomize the radius of the rings (not too close to the edge) and gap larger than 8 or 10
-
 rads = generate_random_rings_list(nRings, minRad, nPxRad-(minRad+100), 8)
-#rads = generate_random_numbers(nRings, 20, 500, 8)
-
-print(rads)
-
 peakPositions = [] # list to store all of the peak positions
 
 for ringNr in range(nRings):  # number of rings
@@ -101,9 +91,6 @@ for ringNr in range(nRings):  # number of rings
 
 	# number of connected areas in this ring (less than maxPeaksRing)
 	nSegmentsInRing = np.random.randint(0,maxSegmentsInRing)
-	
-	# TODO: This will cause overlap of the connected areas in the same ring (fix it)
-	# etaCens = minEta + np.random.random(nSegmentsInRing)*(nPxEta-(minEta+10)) # gebnerate random eta centers for the connected areas
 
 	# Generate random segments for the ring
 	segments = generate_segments(nSegmentsInRing, total_length=nPxEta, min_gap=segDistance, min_segment_length=minSegWidth, max_segment_length=maxSegWidth)
@@ -134,15 +121,13 @@ for ringNr in range(nRings):  # number of rings
 			if yStart< 0: continue
 			if xStart+x.shape[0]>nPxRad: continue
 			if yStart+y.shape[0]>nPxEta: continue
-			# print(f"peak start position: ({xStart},{yStart}), width: {x.shape[0]} height:{y.shape[0]}")
 			img[xStart:xStart+x.shape[0],yStart:yStart+y.shape[0]] += np.transpose(Z).astype(np.uint16)
 			peakPositions.append([peakCenRad,peakCenEta])
 			
 peakPositions = np.array(peakPositions)
 #plt.imsave('output.png',img, cmap='gray', format='png')
 plt.imshow(np.log(img))
-plt.show()
+plt.imsave('output1.png',img)
 
-#plt.savefig('outout.png')
 # plt.scatter(peakPositions[:,1],peakPositions[:,0])
-#plt.show()
+plt.show()

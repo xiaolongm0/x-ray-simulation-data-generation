@@ -1,25 +1,31 @@
 from PIL import Image
-import matplotlib.pyplot as plt
-import numpy as np
+import os
 
-from skimage import io
+def slide_and_save(image_path, window_size=(512, 512), stride=(200, 50), save_dir='sample_images'):
+    # Load the image
+    image = Image.open(image_path)
+    width, height = image.size
 
-img = plt.imread('output.png')
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
-#print(img.shape)
-#plt.imshow(img)
-#plt.show()
+    # Calculate the number of sliding windows
+    num_x = (width - window_size[0]) // stride[0] + 1
+    num_y = (height - window_size[1]) // stride[1] + 1
 
-left = 300
-top = 300
-right = left + 512
-bottom = top + 512
+    # Iterate over all window positions
+    for i in range(num_x):
+        for j in range(num_y):
+            left = i * stride[0]
+            upper = j * stride[1]
+            right = left + window_size[0]
+            lower = upper + window_size[1]
 
-# sample a 512x512 image from the original image
-sample_a_image = img[top:bottom, left:right]
+            # Extract the small image
+            cropped_image = image.crop((left, upper, right, lower))
 
-io.imsave('sample_image_512.png', sample_a_image)
+            # Save the small image
+            cropped_image.save(os.path.join(save_dir, f'sample_{i}_{j}.png'))
 
-plt.imshow(sample_a_image)
-#plt.imsave('sample_image_512.png', sample_a_image, cmap='gray', format='png')
-plt.show()
+# Example usage
+slide_and_save('output_cmap.png')
