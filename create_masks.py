@@ -56,6 +56,31 @@ def generate_segments(n, total_length=512, min_gap=5, min_segment_length=21, max
 
     return segments
 
+import numpy as np
+
+def find_continuous_regions(ring_img):
+    n_cols = ring_img.shape[1]
+    continuous_regions = []
+    in_region = False
+    start_idx = None
+
+    for col_idx in range(n_cols):
+        count = np.sum(ring_img[:, col_idx] > 0)
+        
+        if count >= 5:
+            if not in_region:
+                in_region = True
+                start_idx = col_idx
+        else:
+            if in_region:
+                continuous_regions.append((start_idx, col_idx - 1))
+                in_region = False
+    
+    if in_region:
+        continuous_regions.append((start_idx, n_cols - 1))
+    
+    return continuous_regions
+
 # define the size of the image
 nPxRad = 1500
 nPxEta = 9424
@@ -89,6 +114,8 @@ rads = generate_random_rings_list(nRings, minRad, nPxRad-(minRad+100), 8)
 peakPositions = [] # list to store all of the peak positions
 
 for ringNr in range(nRings):  # number of rings
+	img_mask = np.zeros((nPxRad,nPxEta)).astype(np.uint16)
+
 	radCen = int(rads[ringNr])
 
 	# number of connected areas in this ring (less than maxPeaksRing)
@@ -116,13 +143,6 @@ for ringNr in range(nRings):  # number of rings
 			y = np.linspace(-int(nSigmas*ceil(etaWidthPeak)),int(nSigmas*ceil(etaWidthPeak)),endpoint=True,num=(2*int(nSigmas*ceil(etaWidthPeak))+1))
 			X,Y = np.meshgrid(x,y)
 			Z = gaussian_2d(X,Y,sigma_x=rWidthPeak,sigma_y=etaWidthPeak,intensity=np.random.randint(maxIntensity))
-			
-			#plt.imshow(Z)
-			#plt.imshow(Z.astype(np.uint16))
-			#plt.imshow(np.log(Z.astype(np.uint16)))
-
-			#a = np.transpose(Z).astype(np.uint16)
-			#print(np.sort(a.ravel())[-200:])
 
 			xStart = int(peakCenRad)-int(nSigmas*ceil(rWidthPeak))
 			yStart = int(peakCenEta)-int(nSigmas*ceil(etaWidthPeak))
@@ -130,54 +150,34 @@ for ringNr in range(nRings):  # number of rings
 			if yStart< 0: continue
 			if xStart+x.shape[0]>nPxRad: continue
 			if yStart+y.shape[0]>nPxEta: continue
-			peak_img = img[xStart:xStart+x.shape[0],yStart:yStart+y.shape[0]]
+			peak_img = img_mask[xStart:xStart+x.shape[0],yStart:yStart+y.shape[0]]
 			peak_img += np.transpose(Z).astype(np.uint16)
 			peakPositions.append([peakCenRad,peakCenEta])
 			print(f"Peak center position: {peakCenEta} - {peakCenRad}")
+	
+	img_mask = np.log1p(img_mask).astype(np.uint16)
 
-			# plot the segment image
-			#plt.imshow(peak_img)
-			#plt.imshow(np.log(peak_img))
-			#plt.show()
+	# ring image
+	ring_width = 100
+	# ring_width = 14
+	ring_img = img_mask[int(radCen - ring_width/2): int(radCen + ring_width/2),:]
+	abc = find_continuous_regions(ring_img)
+	print(abc)
+     
+	for i in range(len(abc)):
+		start = abc[i][0]
+		end = abc[i][1]
+		length = end - start
+		if length < 8:
+			length = 8
+		print(f"label is {int(length/8)}")
 
-# for each ring we need to label the ring based on the connected area length
+	plt.imshow(ring_img)
 
-	'''
-	# for each generated segment in the ring we need to label the segment based on the connected area length
-	for segment_idx in range(len(segments)):
-		segment = segments[segment_idx]
-		segment_img = img[segment[0]:segment[1], :]
-		
-		# scan the segment by x axis
-		connected_areas = []
-		start = None
-		for i in range(segment_img.shape[0]):
-			if np.count_nonzero(segment_img[i, :]) > 5:
-				if start is None:
-					start = i
-			else:
-				if start is not None:
-					end = i
-					connected_areas.append((start, end))
-					start = None
-		
-		# label the segment based on the connected area length
-		for i, area in enumerate(connected_areas):
-			area_length = area[1] - area[0]
-			print(f"Segment {segment_idx+1}, Connected Area {i+1} Length: {area_length}")
-	'''
+	# iterate over the ring image from y=0 to y=9424 
 
 peakPositions = np.array(peakPositions)
 #plt.imsave('output.png',img, cmap='gray', format='png')
-
-# max value in the img pixel values
-maxValue = np.max(img)
-print(f"max value: {maxValue}")
-
-# and its location
-maxValueLocation = np.where(img == maxValue)
-
-print(f"max value location: {maxValueLocation}")
 
 plt.imshow(np.log(img))
 #plt.imsave('output1.png',img)

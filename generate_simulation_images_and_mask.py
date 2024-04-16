@@ -78,8 +78,11 @@ minEta = 10
 
 rWidth = 0 # How wide should the peak centers building this peak be?
 
+# Segment width [20, 200]
 minSegWidth = 20
 maxSegWidth = 200
+
+# Segment gap larger than 10
 segDistance = 10
 
 maxNPeaksInSegment = 50 # maximum number of peaks in a connected area
@@ -89,7 +92,7 @@ rads = generate_random_rings_list(nRings, minRad, nPxRad-(minRad+100), 8)
 peakPositions = [] # list to store all of the peak positions
 
 for ringNr in range(nRings):  # number of rings
-	radCen = int(rads[ringNr])
+	radCen = int(rads[ringNr]) # center of the ring
 
 	# number of connected areas in this ring (less than maxPeaksRing)
 	nSegmentsInRing = np.random.randint(0,maxSegmentsInRing)
@@ -97,31 +100,27 @@ for ringNr in range(nRings):  # number of rings
 	# Generate random segments for the ring
 	segments = generate_segments(nSegmentsInRing, total_length=nPxEta, min_gap=segDistance, min_segment_length=minSegWidth, max_segment_length=maxSegWidth)
 
-	segmend_idx = 0
-	for segment in segments:
-		segmend_idx += 1
-		etaCen = int(segment[0] + (segment[1] - segment[0]) / 2)
-		etaWidth = segment[1] - segment[0]
-
+	for segment_idx in range(len(segments)):
+        # number of segments in the ring
+		etaCen = int(segments[segment_idx][0] + (segments[segment_idx][1] - segments[segment_idx][0]) / 2)
+		etaWidth = segments[segment_idx][1] - segments[segment_idx][0]
+        
+		label = etaWidth // 8
+        
 		numPeaks = np.random.randint(2,maxNPeaksInSegment) # Define the num of peaks in the connected area
 		print(f"connect area center position: {etaCen} - connected area width: {etaWidth} - number of peaks: {numPeaks}")
 
 		for peakNr in range(numPeaks):
-			print(f"Total {numPeaks} peaks and Peak index: {peakNr} in segment {segmend_idx}")
-			peakCenRad = (radCen + np.random.random(1)*rWidth).item() # y position of the peak
-			peakCenEta = (etaCen + np.random.random(1)*etaWidth).item() # x position of the peak
+			peakCenRad = (radCen + np.random.random(1)*rWidth).item()
+			peakCenEta = (etaCen + np.random.random(1)*etaWidth).item()
 			rWidthPeak = 1 + np.random.random(1).item()*(sigmaRMax-1)
 			etaWidthPeak = 2 + np.random.random(1).item()*(sigmaEtaMax-1)
 			x = np.linspace(-int(nSigmas*ceil(rWidthPeak)),int(nSigmas*ceil(rWidthPeak)),endpoint=True,num=(2*int(nSigmas*ceil(rWidthPeak))+1))
 			y = np.linspace(-int(nSigmas*ceil(etaWidthPeak)),int(nSigmas*ceil(etaWidthPeak)),endpoint=True,num=(2*int(nSigmas*ceil(etaWidthPeak))+1))
 			X,Y = np.meshgrid(x,y)
 			Z = gaussian_2d(X,Y,sigma_x=rWidthPeak,sigma_y=etaWidthPeak,intensity=np.random.randint(maxIntensity))
-			
-			#plt.imshow(Z)
-			#plt.imshow(Z.astype(np.uint16))
-			#plt.imshow(np.log(Z.astype(np.uint16)))
 
-			#a = np.transpose(Z).astype(np.uint16)
+			a = np.transpose(Z).astype(np.uint16)
 			#print(np.sort(a.ravel())[-200:])
 
 			xStart = int(peakCenRad)-int(nSigmas*ceil(rWidthPeak))
@@ -130,56 +129,23 @@ for ringNr in range(nRings):  # number of rings
 			if yStart< 0: continue
 			if xStart+x.shape[0]>nPxRad: continue
 			if yStart+y.shape[0]>nPxEta: continue
-			peak_img = img[xStart:xStart+x.shape[0],yStart:yStart+y.shape[0]]
-			peak_img += np.transpose(Z).astype(np.uint16)
+			segment_img = img[xStart:xStart+x.shape[0],yStart:yStart+y.shape[0]]
+			segment_img += np.transpose(Z).astype(np.uint16)
 			peakPositions.append([peakCenRad,peakCenEta])
-			print(f"Peak center position: {peakCenEta} - {peakCenRad}")
-
-			# plot the segment image
-			#plt.imshow(peak_img)
-			#plt.imshow(np.log(peak_img))
-			#plt.show()
-
-# for each ring we need to label the ring based on the connected area length
-
-	'''
-	# for each generated segment in the ring we need to label the segment based on the connected area length
-	for segment_idx in range(len(segments)):
-		segment = segments[segment_idx]
-		segment_img = img[segment[0]:segment[1], :]
-		
-		# scan the segment by x axis
-		connected_areas = []
-		start = None
-		for i in range(segment_img.shape[0]):
-			if np.count_nonzero(segment_img[i, :]) > 5:
-				if start is None:
-					start = i
-			else:
-				if start is not None:
-					end = i
-					connected_areas.append((start, end))
-					start = None
-		
-		# label the segment based on the connected area length
-		for i, area in enumerate(connected_areas):
-			area_length = area[1] - area[0]
-			print(f"Segment {segment_idx+1}, Connected Area {i+1} Length: {area_length}")
-	'''
 
 peakPositions = np.array(peakPositions)
 #plt.imsave('output.png',img, cmap='gray', format='png')
 
 # max value in the img pixel values
-maxValue = np.max(img)
-print(f"max value: {maxValue}")
+#maxValue = np.max(img)
+#print(f"max value: {maxValue}")
 
 # and its location
-maxValueLocation = np.where(img == maxValue)
+#maxValueLocation = np.where(img == maxValue)
 
-print(f"max value location: {maxValueLocation}")
+#print(f"max value location: {maxValueLocation}")
 
-plt.imshow(np.log(img))
+plt.imshow(img)
 #plt.imsave('output1.png',img)
 
 # plt.scatter(peakPositions[:,1],peakPositions[:,0])
