@@ -1,7 +1,7 @@
 from PIL import Image
 import os
 
-def slide_and_save(image_path, window_size=(512, 512), stride=(200, 50), save_dir='sample_images'):
+def slide_and_save(image_path, window_size=(1024, 1024), stride=(400, 100), save_dir='sample_images'):
     # Load the image
     image = Image.open(image_path)
     width, height = image.size
@@ -28,4 +28,4 @@ def slide_and_save(image_path, window_size=(512, 512), stride=(200, 50), save_di
             cropped_image.save(os.path.join(save_dir, f'sample_{i}_{j}.png'))
 
 # Example usage
-slide_and_save('output_cmap.png')
+slide_and_save('output_mask.png')

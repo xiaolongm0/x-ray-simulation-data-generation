@@ -58,6 +58,39 @@ def generate_segments(n, total_length=512, min_gap=5, min_segment_length=21, max
 
 import numpy as np
 
+def find_and_modify_continuous_regions(ring_img):
+    n_cols = ring_img.shape[1]
+    continuous_regions = []
+    in_region = False
+    start_idx = None
+
+    for col_idx in range(n_cols):
+        count = np.sum(ring_img[:, col_idx] > 0)
+        
+        if count >= 1:
+            if not in_region:
+                in_region = True
+                start_idx = col_idx
+        else:
+            if in_region:
+                end_idx = col_idx - 1
+                continuous_regions.append((start_idx, end_idx))
+                region_length = end_idx - start_idx + 1
+                replacement_value = region_length // 8
+                for i in range(start_idx, end_idx + 1):
+                    ring_img[:, i][ring_img[:, i] > 0] = replacement_value
+                in_region = False
+    
+    if in_region:
+        end_idx = n_cols - 1
+        continuous_regions.append((start_idx, end_idx))
+        region_length = end_idx - start_idx + 1
+        replacement_value = region_length // 8
+        for i in range(start_idx, end_idx + 1):
+            ring_img[:, i][ring_img[:, i] > 0] = replacement_value
+    
+    return continuous_regions, ring_img
+
 def find_continuous_regions(ring_img):
     n_cols = ring_img.shape[1]
     continuous_regions = []
@@ -67,7 +100,7 @@ def find_continuous_regions(ring_img):
     for col_idx in range(n_cols):
         count = np.sum(ring_img[:, col_idx] > 0)
         
-        if count >= 5:
+        if count >= 1:
             if not in_region:
                 in_region = True
                 start_idx = col_idx
@@ -158,21 +191,19 @@ for ringNr in range(nRings):  # number of rings
 	img_mask = np.log1p(img_mask).astype(np.uint16)
 
 	# ring image
-	ring_width = 100
-	# ring_width = 14
+	#ring_width = 100
+	ring_width = 14
 	ring_img = img_mask[int(radCen - ring_width/2): int(radCen + ring_width/2),:]
-	abc = find_continuous_regions(ring_img)
-	print(abc)
-     
-	for i in range(len(abc)):
-		start = abc[i][0]
-		end = abc[i][1]
-		length = end - start
-		if length < 8:
-			length = 8
-		print(f"label is {int(length/8)}")
+	continuous_regions, masked_ring_img = find_and_modify_continuous_regions(ring_img)
+	#abc = find_and_modify_continuous_regions(ring_img)
+	print(continuous_regions) # segments tuple list [(168, 246), (390, 458), (528, 582), (589, 637), (740, 832), (839, 946), (1051, 1091)]
 
-	plt.imshow(ring_img)
+	img[int(radCen - ring_width/2): int(radCen + ring_width/2),:] += ring_img
+	
+plt.imshow(img)
+    
+
+	#img += img[]
 
 	# iterate over the ring image from y=0 to y=9424 
 
@@ -180,7 +211,7 @@ peakPositions = np.array(peakPositions)
 #plt.imsave('output.png',img, cmap='gray', format='png')
 
 plt.imshow(np.log(img))
-#plt.imsave('output1.png',img)
+plt.imsave('output_mask.png',img)
 
 # plt.scatter(peakPositions[:,1],peakPositions[:,0])
 plt.show()
