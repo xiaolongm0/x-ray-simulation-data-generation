@@ -1,3 +1,7 @@
+'''
+Using sliding window method to sample 1024*1024 images to fit the SAM input
+'''
+
 from PIL import Image
 import os
 
