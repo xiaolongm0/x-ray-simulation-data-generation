@@ -6,6 +6,7 @@ import random
 # Set random seed for reproducibility
 random.seed(2)
 np.random.seed(2)
+MIN_DISTANCE_BETWEEN_RINGS = 1
 CUTOFF_PIXELS_THRESHOLD = 5
 
 def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=1, sigma_y=1, intensity=1):
@@ -25,7 +26,6 @@ def generate_random_rings_list(num_count, lower_bound, upper_bound, min_differen
         if all(abs(potential_number - number) > min_difference for number in numbers):
             numbers.append(potential_number)
     return sorted(numbers)
-
 
 def generate_segments(n, total_length=512, min_gap=5, min_segment_length=21, max_segment_length=200):
     # List to store segments, each represented as (start, end)
@@ -134,7 +134,7 @@ def find_continuous_regions(ring_img):
     return continuous_regions
 
 
-def generate_simulation_image(image_idx):
+def generate_simulation_image(image_idx, sigmaEtaMax=4, sigmaRMax=2, nSigmas=20):
     # define the size of the image
     nPxRad = 1024
     nPxEta = 1024
@@ -145,10 +145,11 @@ def generate_simulation_image(image_idx):
     # define the number of rings
     nRings = 15
 
-    # define the gaussian parameters
-    sigmaEtaMax = 4
-    sigmaRMax = 2
-    nSigmas = 20
+    # Define the gaussian parameters
+    # default value
+    #sigmaEtaMax = 4
+    #sigmaRMax = 2
+    #nSigmas = 20
 
     maxIntensity = 10000  # maximum intensity of the peaks
 
@@ -164,10 +165,16 @@ def generate_simulation_image(image_idx):
     maxNPeaksInSegment = 50  # maximum number of peaks in a connected area
     maxSegmentsInRing = 100  # maximum number of connected areas in a ring
 
-    rads = generate_random_rings_list(nRings, minRad, nPxRad - (minRad + 100), 8)
+    rads = generate_random_rings_list(nRings, minRad, nPxRad - (minRad + 100), MIN_DISTANCE_BETWEEN_RINGS)
     peakPositions = []  # list to store all of the peak positions
 
     for ringNr in range(nRings):  # number of rings
+        
+        # ring level control over the gaussian parameters
+        #sigmaEtaMax = 4
+        Index = random.randint(0, 3)
+        sigmaRMax = [2,2,2,4][Index]
+
         tmp_mask = np.zeros((nPxRad, nPxEta)).astype(np.uint16)
         tmp_peaks = []
 
@@ -195,6 +202,8 @@ def generate_simulation_image(image_idx):
                 peakCenEta = (etaCen + np.random.random(1) * etaWidth).item()  # x position of the peak
                 rWidthPeak = 1 + np.random.random(1).item() * (sigmaRMax - 1)
                 etaWidthPeak = 2 + np.random.random(1).item() * (sigmaEtaMax - 1)
+                print(f"rw: {rWidthPeak} - ew: {etaWidthPeak}")
+
                 x = np.linspace(-int(nSigmas * ceil(rWidthPeak)), int(nSigmas * ceil(rWidthPeak)), endpoint=True,
                                 num=(2 * int(nSigmas * ceil(rWidthPeak)) + 1))
                 y = np.linspace(-int(nSigmas * ceil(etaWidthPeak)), int(nSigmas * ceil(etaWidthPeak)), endpoint=True,
@@ -249,7 +258,11 @@ def generate_simulation_image(image_idx):
 
     # plot image and mask in the same figure
     fig, axs = plt.subplots(1, 2, sharex=True, sharey=True)
-    axs[0].imshow(img)
+    
+    # set title for this figure
+    fig.suptitle(f'Image and Mask pair {image_idx} with sigmaEtaMax:{sigmaEtaMax} and sigmaRMax:{sigmaRMax}')
+
+    axs[0].imshow(img_normalized)
     axs[0].set_title('Image')
     axs[0].set_xlabel('Eta')
     axs[0].set_ylabel('Rad')
@@ -259,9 +272,9 @@ def generate_simulation_image(image_idx):
     axs[1].set_xlabel('Eta')
     axs[1].set_ylabel('Rad')
 
-    plt.savefig(f'./images/sam_size/image_mask_pair_examples/img_mask_{image_idx}.png')
+    #plt.savefig(f'./images/sam_size/tune_gaussian_parameters/img_mask_{image_idx}.png')
 
-    #plt.show()
+    plt.show()
 
     #plt.imshow(img)
     #plt.savefig(f'img_{image_idx}.png')
@@ -285,20 +298,15 @@ def generate_simulation_image(image_idx):
 
     #peakPositions = np.array(peakPositions)
 
-    #plt.imsave('output.png',img, cmap='gray', format='png')
-
-    #plt.imshow(np.log(img))
-    #plt.imsave('output_mask.png',img)
-
     # plt.scatter(peakPositions[:,1],peakPositions[:,0])
 
     #plt.show()
 
-
 # python main function
+
 def main():
-    for i in range(0, 10):
-        generate_simulation_image(i)
+    for i in range(1, 5):
+        generate_simulation_image(i, sigmaEtaMax=4, sigmaRMax=2*i, nSigmas=20)
 
 if __name__ == "__main__":
     main()

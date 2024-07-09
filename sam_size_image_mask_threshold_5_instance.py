@@ -59,7 +59,7 @@ def generate_segments(n, total_length=512, min_gap=5, min_segment_length=21, max
             break
     return segments
 
-def find_and_modify_continuous_regions(ring_img, peaks):
+def find_and_modify_continuous_regions(ring_img, peaks, instance_idx):
     n_cols = ring_img.shape[1]
     raw_continuous_regions = []
     peaks_arr = np.sort(np.array(peaks))
@@ -104,11 +104,19 @@ def find_and_modify_continuous_regions(ring_img, peaks):
     for contour in adjusted_continuous_regions:
         start = contour[0]
         end = contour[1]
-        new_value = (end - start) // 8
+        #new_value = (end - start) // 8
+        instance_idx += 1
+        
+        if instance_idx >= 255:
+            new_value = 0 # once the instance label is larger than 255, reset the instance label to 0
+        new_value = instance_idx
+        
+        #print(f"Instance {instance_idx} - new_value: {new_value}")
+        
         for col in range(start, end):
             ring_img[:, col][ring_img[:, col] > 0] = new_value
 
-    return adjusted_continuous_regions, ring_img
+    return adjusted_continuous_regions, ring_img, instance_idx
 
 def find_continuous_regions(ring_img):
     n_cols = ring_img.shape[1]
@@ -166,6 +174,8 @@ def generate_simulation_image(image_idx):
 
     rads = generate_random_rings_list(nRings, minRad, nPxRad - (minRad + 100), 8)
     peakPositions = []  # list to store all of the peak positions
+
+    instance_idx = 0 # use for record the instance index (instance means a single small segment in this image)
 
     for ringNr in range(nRings):  # number of rings
         tmp_mask = np.zeros((nPxRad, nPxEta)).astype(np.uint16)
@@ -229,7 +239,7 @@ def generate_simulation_image(image_idx):
         ring_img = np.log1p(ring_img).astype(np.uint16)
         #plt.imshow(ring_img)
         #plt.show()
-        continuous_regions, masked_ring_img = find_and_modify_continuous_regions(ring_img, tmp_peaks)
+        continuous_regions, masked_ring_img, instance_idx = find_and_modify_continuous_regions(ring_img, tmp_peaks, instance_idx)
         #abc = find_and_modify_continuous_regions(ring_img)
         # print(continuous_regions) # segments tuple list [(168, 246), (390, 458), (528, 582), (589, 637), (740, 832), (839, 946), (1051, 1091)]
 
@@ -259,9 +269,9 @@ def generate_simulation_image(image_idx):
     axs[1].set_xlabel('Eta')
     axs[1].set_ylabel('Rad')
 
-    plt.savefig(f'./images/sam_size/image_mask_pair_examples/img_mask_{image_idx}.png')
+    #plt.savefig(f'./images/sam_size/image_mask_pair_examples/img_mask_{image_idx}.png')
 
-    #plt.show()
+    plt.show()
 
     #plt.imshow(img)
     #plt.savefig(f'img_{image_idx}.png')
@@ -297,7 +307,7 @@ def generate_simulation_image(image_idx):
 
 # python main function
 def main():
-    for i in range(0, 10):
+    for i in range(0, 3):
         generate_simulation_image(i)
 
 if __name__ == "__main__":
