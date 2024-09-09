@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import ceil
 import random
+import argparse
 
 # Set random seed for reproducibility
 random.seed(2)
@@ -154,7 +155,7 @@ def generate_simulation_image(image_idx):
     nRings = 15
 
     # define the gaussian parameters
-    sigmaEtaMax = 4
+    sigmaEtaMax = 10000
     sigmaRMax = 2
     nSigmas = 20
 
@@ -268,10 +269,19 @@ def generate_simulation_image(image_idx):
     axs[1].set_title('Mask')
     axs[1].set_xlabel('Eta')
     axs[1].set_ylabel('Rad')
+    
+    plt.imsave(f'./tune_overlapping_images/img_{image_idx}.png',img)
+    plt.imsave(f'./tune_overlapping_images/mask_{image_idx}.png',mask)
+    plt.show()
+
+    #np.save(f'data/npy/hedm_powder/imgs/img_{image_idx}.npy', img)
+    #np.save(f'data/npy/hedm_powder/gts/img_{image_idx}.npy', mask)
+
+    #np.save(f'./img_{image_idx}.npy', img)
+    #np.save(f'./mask_{image_idx}.npy', mask)
 
     #plt.savefig(f'./images/sam_size/image_mask_pair_examples/img_mask_{image_idx}.png')
 
-    plt.show()
 
     #plt.imshow(img)
     #plt.savefig(f'img_{image_idx}.png')
@@ -296,17 +306,16 @@ def generate_simulation_image(image_idx):
     #peakPositions = np.array(peakPositions)
 
     #plt.imsave('output.png',img, cmap='gray', format='png')
-
     #plt.imshow(np.log(img))
     #plt.imsave('output_mask.png',img)
-
     # plt.scatter(peakPositions[:,1],peakPositions[:,0])
-
     #plt.show()
-
 
 # python main function
 def main():
+    parser = argparse.ArgumentParser(description='Generate simulation images')
+    args = parser.parse_args()
+
     for i in range(0, 3):
         generate_simulation_image(i)
 

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import ceil
 import random
+import argparse
 
 # Set random seed for reproducibility
 random.seed(2)
@@ -305,8 +306,14 @@ def generate_simulation_image(image_idx, sigmaEtaMax=4, sigmaRMax=2, nSigmas=20)
 # python main function
 
 def main():
-    for i in range(1, 5):
-        generate_simulation_image(i, sigmaEtaMax=4, sigmaRMax=2*i, nSigmas=20)
+    parser = argparse.ArgumentParser(description='Generate simulation images')
+    parser.add_argument('--sigmaEtaMax', type=int, default=4, help='Sigma Eta Max')
+    parser.add_argument('--sigmaRMax', type=int, default=2, help='Sigma R Max')
+    parser.add_argument('--nSigmas', type=int, default=20, help='Number of Sigmas')
+    args = parser.parse_args()
 
+    for image_idx in range(1, 5):
+        generate_simulation_image(image_idx, sigmaEtaMax=args.sigmaEtaMax, sigmaRMax=args.sigmaRMax, nSigmas=args.nSigmas)
+    
 if __name__ == "__main__":
     main()
