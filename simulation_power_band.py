@@ -48,7 +48,39 @@ def main():
     for peak in peaks:
         im[:,rCen-etaExtent:rCen+etaExtent+1] += powderBand(X,Y,peak)
 
+    #add more small peaks
+    for i in range(100):
+        peak = Peak(sigmaX=20*np.random.uniform(low=0.5,high=1), sigmaY=4, muX=np.random.uniform(low=0,high=9424), muY=rCen, intensity=np.random.uniform(low=3000,high=5000))
+        im[:,rCen-etaExtent:rCen+etaExtent+1] += powderBand(X,Y,peak)
+
     im = im.astype(np.uint16)
+    
+    imt = im.T
+    
+    # Get pixel values along the center line in both directions
+    x_values = imt[400, :]  # Middle row in y direction
+    y_values = imt[:, 400]   # Middle column in x direction
+
+    # Plot the pixel values
+    plt.figure(figsize=(12, 6))
+
+    # X direction
+    plt.subplot(1, 2, 1)
+    plt.plot(x_values)
+    plt.title('Pixel Values in X Direction')
+    plt.xlabel('X Position')
+    plt.ylabel('Pixel Value')
+
+    # Y direction
+    plt.subplot(1, 2, 2)
+    plt.plot(y_values)
+    plt.title('Pixel Values in Y Direction')
+    plt.xlabel('Y Position')
+    plt.ylabel('Pixel Value')
+
+    plt.tight_layout()
+    plt.show()
+    
 
     plt.imshow(im.T,aspect='auto')
     plt.show()
