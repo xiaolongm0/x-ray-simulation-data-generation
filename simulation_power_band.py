@@ -32,29 +32,34 @@ def main():
     etaExtent = 120 # width of the peak in the x direction
     rwidth = 20 # width of the peak in the y direction
 
+    # Add Powerband background
     for peakNr in range(nPeaks):
-        peaks.append(Peak(sigmaX=50000*np.random.uniform(low=0.5,high=1), sigmaY=rwidth, muX=np.random.uniform(low=0,high=9424/(peakNr+1)), muY=rCen, intensity=np.random.uniform(low=1000,high=2000)))
+        rand_width = 10000*np.random.uniform(low=0.5,high=1)
+        rand_cent = np.random.randint(low=0,high=9424)
+        rand_intensity = np.random.uniform(low=1000,high=2000)
+        print("rand_width: ", rand_width)
+        print("rand_cent: ", rand_cent)
+        print("rand_intensity: ", rand_intensity)
+        peaks.append(Peak(sigmaX=rand_width, sigmaY=rwidth, muX=rand_cent, muY=rCen, intensity=rand_intensity))
 
     y = np.linspace(0,9424,num=9424)
     x = np.linspace(rCen-etaExtent,rCen + etaExtent+1,num=etaExtent*2+1)
 
     Y,X = np.meshgrid(x,y)
 
-    print("x.shape: ",x.shape)
-    print("y.shape: ",y.shape)
-    print("X.shape: ",X.shape)
-    print("Y.shape: ",Y.shape)
-
     for peak in peaks:
         im[:,rCen-etaExtent:rCen+etaExtent+1] += powderBand(X,Y,peak)
 
-    #add more small peaks
-    for i in range(100):
-        peak = Peak(sigmaX=20*np.random.uniform(low=0.5,high=1), sigmaY=4, muX=np.random.uniform(low=0,high=9424), muY=rCen, intensity=np.random.uniform(low=3000,high=5000))
-        im[:,rCen-etaExtent:rCen+etaExtent+1] += powderBand(X,Y,peak)
+    # Add peaks on power band
+    #for i in range(100):
+    #    peak = Peak(sigmaX=20*np.random.uniform(low=0.5,high=1), sigmaY=4, muX=np.random.uniform(low=0,high=9424), muY=rCen, intensity=np.random.uniform(low=3000,high=5000))
+    #    im[:,rCen-etaExtent:rCen+etaExtent+1] += powderBand(X,Y,peak)
 
-    im = im.astype(np.uint16)
-    
+    # Plot the image
+    plt.imshow(im.T,aspect='auto')
+    plt.show()
+
+    # Plot statistic
     imt = im.T
     
     # Get pixel values along the center line in both directions
@@ -66,6 +71,9 @@ def main():
 
     # X direction
     plt.subplot(1, 2, 1)
+    # plot x axis start from 0 to 1500
+    plt.ylim(0, 5000)
+
     plt.plot(x_values)
     plt.title('Pixel Values in X Direction')
     plt.xlabel('X Position')
@@ -80,11 +88,7 @@ def main():
 
     plt.tight_layout()
     plt.show()
-    
 
-    plt.imshow(im.T,aspect='auto')
-    plt.show()
-    
 # main
 if __name__ == "__main__":
     main()
