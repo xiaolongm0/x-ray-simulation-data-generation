@@ -19,7 +19,7 @@ def visualize_image(image):
     plt.imshow(image, cmap='jet')
     plt.colorbar()
     plt.axis('off')
-    plt.show() 
+    plt.show()
 
 def apply_threshold(image_array, low_threshold, high_threshold):
     # check if image array is numpy array
